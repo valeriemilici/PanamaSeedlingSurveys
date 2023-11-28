@@ -1,0 +1,100 @@
+---
+title: "Analysis of precipitation trends"
+author: "Robert Bagchi"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: pdf_document
+number_sections: yes
+toc: true
+---
+
+Don't run this code once you get it to work the first time. 
+```{r install rnaturalearthhires}
+library(devtools)
+devtools::install_github("ropensci/rnaturalearthhires") #I skip update
+```
+
+
+```{r packages, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(tidyselect)
+library(reshape2)
+library(sf)
+library(raster)
+library(ggthemes)
+library(rnaturalearth)
+library(ggspatial)
+library(ggrepel)
+```
+
+Get precipitation data from Worldclim and coastline from Natural Earth. 
+
+```{r getData}
+world <- ne_coastline(scale = "medium", returnclass = "sf")
+YesCAM <- ne_countries(scale = "medium", type = "countries", returnclass = "sf")
+#prec <- raster("data/wc2.0_bio_30s_12.tif") #raster("data/bio12.bil")
+prec <- getData("worldclim", var = "prec", res = 0.5, lon = -80, lat=8)
+sites <- read.csv("~/Desktop/Grad School/Chapters/Chapter1/2018-2019/Analysis/PanamaSeedlingSurveys/Data/site_info.csv")
+```
+
+
+```{r}
+
+names <- c("Metropolitano", "Buena Vista", "El Charco", "Oleoducto", "San Lorenzo")
+
+sites<- cbind(sites, names)
+```
+
+Subset Panama data
+
+
+```{r get_panamadata}
+pan_bounds <- list(x=c(-83, -77), y=c(7, 10))
+
+## get data from with each GCM in a column
+pan_prec_df <- prec %>% crop(extent(pan_bounds)) %>%
+  as.data.frame(xy=TRUE)
+
+pan_prec_df <- pan_prec_df %>%  
+  # rowwise() %>%
+  mutate(MAP = rowSums(across(starts_with("prec")), na.rm=FALSE))
+
+summary(pan_prec_df)
+```
+
+```{r}
+pl <-   
+  ggplot() +
+  geom_tile(data=filter(pan_prec_df, !is.na(MAP)),
+              aes(x=x, y=y, fill=MAP)) +
+  geom_sf(data=world, col=NA, fill=NA, size=0) +
+  coord_sf(xlim = pan_bounds$x, ylim = pan_bounds$y) +
+  annotation_scale(location = "br", width_hint = 0.25) +
+  annotation_north_arrow(location = "br", which_north = "true", 
+                         pad_x = unit(0.5, "in"), pad_y = unit(0.3, "in"), 
+                         style = north_arrow_nautical) +
+  annotate(geom = "text", x = c(-81, -79.5), y = c(9.5, 8.2), 
+           label = c("Atlantic","Pacific"), fontface = "italic",
+           color = "grey22", size = 4) +
+  scale_fill_viridis_c(option = "magma", na.value=NA, direction=-1)+
+  scale_x_continuous(breaks=seq(-82, -78,1)) +
+  scale_y_continuous(breaks=seq(7, 10, 1)) +
+  labs(x="", y="", fill="Mean Annual \nPrecipitation (mm)") +
+  theme_classic() +
+  theme(panel.grid.major = element_line(color = gray(0.8), linetype = "dashed", 
+                                        size = 0.5), 
+              panel.background = element_rect(fill = "aliceblue"), 
+        plot.margin = unit(c(0.5, 1, 0.5, 1), "cm"), 
+        legend.title=element_text(size=10))
+pl
+siteplot <- pl + geom_point(data=sites, aes(y=Latitude, x=Longitude),
+                            size = 0.5) +
+ geom_label_repel(data=sites, aes(label=names, y=Latitude, x=Longitude), 
+                  size=3, 
+                  nudge_y = 0.15, 
+                  nudge_x = 0.75
+                  )
+siteplot
+ggsave(filename ="Figures/SiteMap.pdf", plot = siteplot, 
+       height = 5, width = 8, units = "in")
+```
+
