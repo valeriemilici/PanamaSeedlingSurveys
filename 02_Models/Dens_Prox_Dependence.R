@@ -11,8 +11,7 @@ library(pbkrtest) #LRT in dist model
 library(gamm4) #nonlinear model testing
 library(afex) #automatically uses all model convergence optimizers
 
-dat <- read.csv("Data/mod_data_2.csv")
-
+dat <- read.csv("Data/NCDD_Data.csv")
 
 ### Prepare the Data ----------------------------------
 sp.prox.var <- dat %>% group_by(Sp) %>%
@@ -55,8 +54,31 @@ cor.test(dat$N.obs, dat$prox, method = "pearson")
 # this correlation is significant, but it is slight and unlikely to lead to
 # variance inflation/ identifiability issues
 
-datx <- dat %>% group_by(Sp) %>%
-  summarize(correlation = cor.test(datx$N.obs, datx$prox))
+## Density + Proximity * MAP -------------------------
+
+#Note: This model tests whether both density and proximity can be used in the
+# same model, because they are not correlated. Tests show that the model has
+# a degenerate Hessian when both are included, which causes issues in the
+# estimation of SE. Density and Proximity should be modeled separately.
+
+both_mod <- glmer(Symptomatic/N.obs ~ 
+                    scale(MAP) *( scale(log1p(het.dens)) +
+                                    scale(log(N.obs)) +
+                                    scale(log1p(prox.h)) +
+                                    scale(log1p(prox)) )+
+                    as.factor(Census)+ 
+                    (1|Site/Transect) + (log(N.obs)||Sp) + (log1p(prox)||Sp),
+                  family = binomial,
+                  weights = N.obs, 
+                  data = dat.both, 
+                  control = glmerControl(optimizer = "bobyqa"))
+
+summary(both_mod)
+#model fails to converge. 
+
+allFit(both_mod) #will an alternative optimizer get it to converge?
+#alternative optimizers are ok, but model still fails to converge and has
+#degenerate Hessian. 
 
 ## Density x MAP -------------------------------
 densMAP_mod <- glmer(cbind(Symptomatic, N.obs - Symptomatic) ~ 
@@ -73,26 +95,6 @@ summary(densMAP_mod)
 
 
 saveRDS(densMAP_mod, "modeloutput/densMAP_mod") #good
-## Density + Proximity * MAP -------------------------
-
-both_mod <- glmer(Symptomatic/N.obs ~ 
-                       scale(MAP) *( scale(log1p(het.dens)) +
-                                       scale(log(N.obs)) +
-                                       scale(log1p(prox.h)) +
-                                       scale(log1p(prox)) )+
-                    as.factor(Census)+ 
-                       (1|Site/Transect) + (log(N.obs)||Sp) + (log1p(prox)||Sp),
-                     family = binomial,
-                     weights = N.obs, 
-                     data = dat.both, 
-                     control = glmerControl(optimizer = "bobyqa"))
-
-summary(both_mod)
-#model fails to converge. 
-
-allFit(both_mod) #will an alternative optimizer get it to converge?
-#alternative optimizers are ok, but model still fails to converge and has
-#degenerate Hessian. 
 
 ## Proximity x MAP ------------------------------
 dat.dist$Census <- as.factor(dat.dist$Census)
@@ -138,7 +140,6 @@ distMAP_mod_i <- glmer(Symptomatic/N.obs ~
                      control = glmerControl(optimizer="bobyqa"))
 
 anova(distMAP_mod, distMAP_mod_i)
-
 
 ## Nonlinear responses --------------------
 # Effect of Density GAMM ----------------------
@@ -186,53 +187,3 @@ AIC(distMAP_gam$mer, distMAP_mod)
 #both tests indicate that the lme4 model is better than the gamm.
 #dAIC favoring lme4 model = 1.3
 #lme4 performance score = 75%, gam performance score = 25%
-
-### CDD x Species Characteristics ---------------------------------------------
-
-## Proximity and Abundance --------------------
-distSumBA_mod <- glmer(Symptomatic/N.obs ~ 
-                      scale(sumBA) * (scale(log1p(prox.h)) +
-                                           scale(log1p(prox))) +
-                        as.factor(Census)+ 
-                        scale(MAP) +
-                      (1|Site/Transect) + (log1p(prox)||Sp),
-                    family = binomial,
-                    weights = N.obs, 
-                    data = dat.dist, 
-                    control = glmerControl(optimizer = "bobyqa"))
-
-summary(distSumBA_mod) 
-#positive interaction. Higher distance dependence in more common species
-
-testDispersion(distSumBA_mod) #ok
-simulationOutput <- simulateResiduals(fittedModel = distSumBA_mod, plot = F)
-plot(simulationOutput) #good
-testZeroInflation(simulationOutput) #good
-
-saveRDS(distSumBA_mod, "modeloutput/BAdist_mod") #good
-
-### Density and Abundance ------------------------------------------------------
-BAdens.mod <- glmer(Symptomatic/N.obs ~  scale(sumBA)*(scale(log(N.obs))  +
-                                                     scale(log1p(het.dens))) +
-                        as.factor(Census) +
-                      scale(MAP) +
-                        (1|Site/Transect) + (log(N.obs)||Sp),
-                      data = dat.dens,
-                      weights = N.obs,
-                      family = binomial,
-                      control = glmerControl(optimizer = "bobyqa"))
-
-summary(BAdens.mod) 
-
-testDispersion(BAdens.mod)
-simulationOutput <- simulateResiduals(fittedModel = BAdens.mod, plot = F)
-plot(simulationOutput)
-testZeroInflation(simulationOutput) #model is good
-
-
-saveRDS(BAdens.mod, "modeloutput/BAdens.mod")
-# species experience CNDD, common species are more likely to be sick,
-#BUT common species are less likely to experience CNDD. 
-# Also more common species may have higher disease incidence when at high
-# overall seedling density. This may be because they can't escape, or perhaps
-# they are susceptible species that are likely to become sick. 

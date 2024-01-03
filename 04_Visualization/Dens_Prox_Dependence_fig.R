@@ -10,8 +10,8 @@ library(patchwork) #for tiling graphs
 library(lubridate) # for date objects
 
 #Load Model Output
-BAdens.mod <- readRDS("modeloutput/BAdens.mod")
-BAdist.mod <- readRDS("modeloutput/BAdist_mod")
+densMAP_mod <- readRDS("modeloutput/densMAP.RDS")
+distMAP_mod <- readRDS("modeloutput/distMAP.RDS")
 #Load Bootstrap Output
 load("BootOutput/dens.boot")
 load("BootOutput/dist.boot")
@@ -36,17 +36,16 @@ dat.dist <- dat %>% filter( Sp %in% sp.prox.var)
 dens <- expand.grid(MAP = quantile(unique(dat.dens$MAP), probs = 0.5), 
                     Census = as.factor(8),
                     het.dens = median(dat.dens$het.dens),
-                    N.obs = seq(1, 45, 5),
-                    sumBA = median(dat.dens$sumBA, na.rm = T))
+                    N.obs = seq(1, 45, 5))
 
-dens$preds <- predict(BAdens.mod, newdata = dens, re.form = ~0) 
+dens$preds <- predict(densMAP_mod, newdata = dens, re.form = ~0) 
 
 dens <- mutate(dens, probs = plogis(preds))
 
 #merging bootstrapped confidence intervals
 dens<- data.frame(dens, confint(dens.boot))
 
-names(dens)[8:9] <- c("lwr", "upr") 
+names(dens)[7:8] <- c("lwr", "upr") 
 
 
 ## plot fig
@@ -76,19 +75,18 @@ dist <- expand.grid(MAP = quantile(unique(dat.dist$MAP), probs = 0.5),
                           Census = as.factor(8),
                           prox.h = median(dat.dist$prox.h),
                           prox = quantile(dat.dist$prox,
-                                          probs = seq(0.1,0.9,0.1)),
-                          sumBA = median(dat.dist$sumBA, na.rm = T))
+                                          probs = seq(0.1,0.9,0.1)))
 
 
 
-dist$preds <- predict(BAdist.mod, newdata = dist, re.form = ~0) 
+dist$preds <- predict(distMAP_mod, newdata = dist, re.form = ~0) 
 
 dist <- mutate(dist, probs = plogis(preds))
 
 #merging bootstrapped confidence intervals
 dist<- data.frame(dist, confint(dist.boot))
 
-names(dist)[8:9] <- c("lwr", "upr") 
+names(dist)[7:8] <- c("lwr", "upr") 
 
 dist <- mutate(dist, distance = 1/prox)
 

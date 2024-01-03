@@ -10,7 +10,6 @@ library(DHARMa) #model diagnostics
 library(performance) #VIF and model diagnostics
 
 dat <- read.csv("Data/ModDataTraits.csv")
-dat2 <- read.csv("Data/mod_data_2.csv")
 
 ### How many observations of each dispersal mechanism do I have? --------------
 
@@ -37,22 +36,11 @@ dispall.mod <- glmer(Symptomatic/N.obs ~  bat  + nonvolant_mammal +
                      control = glmerControl(optimizer = "bobyqa"))
 
 summary(dispall.mod)
-plogis(3.05)
-
 
 anova(dispall.mod)
 testDispersion(dispall.mod)
 simulationOutput <- simulateResiduals(fittedModel = dispall.mod, plot = F)
 plot(simulationOutput)
 #deviation signification but the lines look good given the number of data points. 
-#nonvolant_mammal dispersal is associated with a 95% increase in obs. symptoms
+#nonvolant_mammal dispersal is associated with an increase in obs. symptoms
 
-dat2 <- filter(dat2, closest_adult < 200)
-
-dispdist.mod <- lmer(closest_adult ~  bat  + nonvolant_mammal +
-                       small_bird + large_bird + wind  +
-                       as.factor(Census) +
-                       (1|Transect/Site) + (1|Sp),
-                     data = dat2)
-
-summary(dispdist.mod)

@@ -14,8 +14,7 @@ dat$Census <- as.factor(dat$Census)
 contrasts(dat$Census) <- contr.sum(5)
 
 dat1 <- filter(dat, SumBA > 0)
-sum(dat1$Symptomatic)
-sum(dat1$Asymptomatic)
+
 ### Model
 
 sumBA.mod <- glmer(Symptomatic/N.obs ~ scale(SumBA)  +

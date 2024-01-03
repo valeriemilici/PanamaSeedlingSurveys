@@ -29,10 +29,3 @@ summary(CensoMAP_mod)
 
 car::Anova(CensoMAP_mod)
 saveRDS(CensoMAP_mod, file = "modeloutput/CensoMAP_mod.RDS")
-
-## The story you know and love. Disease was more prevalent as time went on. There
-## is essentially no precipitation gradient, except for in June where there was more
-## disease in dry sites relative to wet sites, but no real story here. 
-
-### Takeaway: It takes time for disease to develop on seedlings. They are not immediately
-### and obviously infected. 

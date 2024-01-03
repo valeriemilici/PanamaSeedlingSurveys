@@ -49,8 +49,18 @@ po/*~
 rsconnect/
 
 # Output Files
-Figures/
-BootOutput/
-modeloutput/
-Data/
-03_Visualization/wc0.5/
+*.docx
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.pptx
+*.xlsx
+*.txt
+*.csv
+*.RDS
+*.boot
+04_Visualization/wc0.5/
+00_RawDataPrep/
+*.mod
+*_mod

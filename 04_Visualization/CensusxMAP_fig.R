@@ -39,17 +39,14 @@ fig.dates <- data.frame(Census,
 #make sure fixed and random effect lines have census date column
 preddat <- merge(preddat, fig.dates, by = "Census") 
 
-### Liza's Suggestion ----------------------------------------------------------
+#back convert scaled MAP values to actual values for plotting
 MAP <- unique(dat$MAP)
-
-mean(MAP) #2335.6
-sd(MAP) #396.3
 
 preddat$MAP <- (preddat$MAP.scaled*sd(MAP)) + mean(MAP)
 
 preddat <- preddat[,-c(1,2,7)]
 
-## Panel for MAP only
+## Panel for mean MAP-effect only
 
 load("BootOutput/MAP1.boot")
 

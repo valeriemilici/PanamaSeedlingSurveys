@@ -1,3 +1,4 @@
+#Initialize Workspace -----
 rm(list = ls())
 
 library(tidyverse) #because it's always needed
@@ -41,30 +42,11 @@ prox.sp_re <- prox.sp_re %>%
 prox.sp_re$sp.name <- paste(prox.sp_re$genus, prox.sp_re$species, sep = " ")
 #entecy is missing?
 
-prox.sp_re[15,12] <- "Enterolobium cyclocarpum"
+prox.sp_re[15,12] <- "Enterolobium cyclocarpum" #Fixed
 
 prox.sp_re$obs.dom <- paste(prox.sp_re$sp.name, prox.sp_re$abund.p, sep = " ")
 #ok now it looks good
 
-### Make the figure (original) -------------------------------------------------
-dist.re <- ggplot(prox.sp_re, aes(condval, reorder(obs.dom, condval)))+
-  geom_point() +
-  geom_errorbarh(mapping = aes(xmin = lwr, xmax = upr)) +
-  geom_vline(xintercept = 0) + 
-  scale_y_discrete(guide = guide_axis(check.overlap = T)) +
-  labs(x = "Effect of Proximity",
-       y = "Species") +
-  theme_classic() +
-  theme(axis.title = element_text(size = 12),
-        #legend.title = element_text(size = 14),
-       # legend.text = element_text(size = 12),
-        axis.text = element_text(size = 10),
-        axis.text.y = element_text(face = "italic"))
-
-dist.re
-
-ggsave("Figures/dist_ranef.jpeg", plot = dist.re,
-       height = 8, width = 5, units = "in")
 
 ### Order by species dominance (the adults) ------------------------------------
 
@@ -77,8 +59,6 @@ dist.re2 <- ggplot(prox.sp_re, aes(condval, reorder(obs.dom, as.numeric(sumBA)))
        y = "Species") +
   theme_classic() +
   theme(axis.title = element_text(size = 12),
-        #legend.title = element_text(size = 14),
-       # legend.text = element_text(size = 12),
         axis.text = element_text(size = 10),
         axis.text.y = element_text(face = "italic"))
 
@@ -86,40 +66,3 @@ dist.re2
 
 ggsave("Figures/dist_ranef2.png", plot = dist.re2,
        height = 8, width = 5, units = "in")
-
-### Order by species dominance (seedling observations) ------------------------
-prox.sp_re <- arrange(prox.sp_re, desc(abund)) %>%
-  mutate(abund.p = paste0("(", abund, ")"))
-
-prox.sp_re$sp.name <- paste(prox.sp_re$genus, prox.sp_re$species, sep = " ")
-#entecy is missing?
-
-prox.sp_re[15,10] <- "Enterolobium cyclocarpum"
-
-
-
-prox.sp_re$obs.dom <- paste(prox.sp_re$sp.name, prox.sp_re$abund.p, sep = " ")
-#ok now it looks good
-
-dist.re3 <- ggplot(prox.sp_re, aes(condval, reorder(obs.dom, as.numeric(abund))))+
-  geom_point() +
-  geom_errorbarh(mapping = aes(xmin = lwr, xmax = upr)) +
-  geom_vline(xintercept = 0) + 
-  scale_y_discrete(guide = guide_axis(check.overlap = T)) +
-  labs(x = "Effect of Proximity",
-       y = "Species") +
-  theme_classic() +
-  theme(axis.title = element_text(size = 16),
-        legend.title = element_text(size = 14),
-        legend.text = element_text(size = 12),
-        axis.text = element_text(size = 12),
-        axis.text.y = element_text(face = "italic"))
-
-dist.re3
-
-ggsave("Figures/dist_ranef3.jpeg", plot = dist.re3,
-       height = 8, width = 5, units = "in")
-
-
-
-
