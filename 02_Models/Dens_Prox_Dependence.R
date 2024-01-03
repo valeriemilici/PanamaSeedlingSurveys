@@ -12,6 +12,7 @@ library(gamm4) #nonlinear model testing
 library(afex) #automatically uses all model convergence optimizers
 
 dat <- read.csv("Data/NCDD_Data.csv")
+#Data found in Zenodo Repository 10.5281/zenodo.10456096. 
 
 ### Prepare the Data ----------------------------------
 sp.prox.var <- dat %>% group_by(Sp) %>%

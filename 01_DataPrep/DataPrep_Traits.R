@@ -12,6 +12,7 @@ library(spatstat)
 
 dat <- read.csv("Data/Traits_Data_Raw.csv") 
 #census data, includes SumBA, ready for merge with dispersal and sm data
+#Data found in Zenodo Repository 10.5281/zenodo.10456096. 
 
 dispersal <- read.csv("Data/dispersal_SJW.csv") #dispersal data
 #See Wright et al., 2016 (Ecology;
